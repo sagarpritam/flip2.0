@@ -15,19 +15,19 @@ from typing import Dict, Any, Tuple, List
 
 class PIIDetectorRedactor:
     """
-    A unified PII detection and redaction system compliant with ISCP guidelines,
-    covering both standalone and combinatorial PII.
+    A comprehensive PII detection and redaction system that handles
+    both standalone and combinatorial PII according to ISCP guidelines.
     """
     
-    def _init_(self):
+    def __init__(self):
         # Configure detection parameters based on business requirements
         self.standalone_pii_fields = ['phone', 'aadhar', 'passport', 'upi_id']
         self.combinatorial_fields = ['name', 'email', 'address', 'device_id', 'ip_address']
         
     def normalize_json_value(self, value):
         """
-        Supports diverse data formats, including 
-        scientific notation often found in CSV exports from Excel and Google Sheets.
+        Handle different data formats including scientific notation
+        that commonly appears in CSV exports from Excel/Google Sheets
         """
         if isinstance(value, (int, float)):
             # Handle large numbers that might be in scientific notation
@@ -38,8 +38,8 @@ class PIIDetectorRedactor:
     
     def is_valid_phone_number(self, phone_str):
         """
-        Validates Indian mobile numbers (10 digits starting with 6–9) 
-        while accounting for edge cases in data processing
+        Validate Indian mobile numbers (10 digits starting with 6,7,8,9)
+        Also handles edge cases from data processing
         """
         digits_only = re.sub(r'\D', '', str(phone_str))
         return (len(digits_only) == 10 and 
@@ -48,16 +48,16 @@ class PIIDetectorRedactor:
     
     def is_valid_aadhar(self, aadhar_str):
         """
-        Validates Aadhaar numbers (12 digits) with support for multiple input formats, 
-        including scientific notation.
+        Validate Aadhar format (12 digits)
+        Handles various input formats including scientific notation
         """
         digits_only = re.sub(r'\D', '', str(aadhar_str))
         return len(digits_only) == 12 and digits_only.isdigit()
     
     def is_valid_passport(self, passport_str):
         """
-        Validates Indian passport numbers using standard patterns, 
-        typically a letter followed by 7–8 digits
+        Validate Indian passport formats
+        Common patterns: Letter followed by 7-8 digits
         """
         passport_clean = str(passport_str).upper().strip()
         # Indian passport patterns
@@ -205,109 +205,109 @@ class PIIDetectorRedactor:
                 
         return False
     
-    def apply_mying_strategy(self, pii_type, value):
+    def apply_masking_strategy(self, pii_type, value):
         """
-        Apply appropriate mying based on PII type and data sensitivity
+        Apply appropriate masking based on PII type and data sensitivity
         """
         value_str = self.normalize_json_value(value)
         
         if pii_type == 'phone':
-            return self._my_phone_number(value_str)
+            return self._mask_phone_number(value_str)
         elif pii_type == 'aadhar':
-            return self._my_aadhar_number(value_str)
+            return self._mask_aadhar_number(value_str)
         elif pii_type == 'passport':
-            return self._my_passport_number(value_str)
+            return self._mask_passport_number(value_str)
         elif pii_type == 'upi_id':
-            return self._my_upi_id(value_str)
+            return self._mask_upi_id(value_str)
         elif pii_type == 'email':
-            return self._my_email_address(value_str)
+            return self._mask_email_address(value_str)
         elif pii_type == 'name':
-            return self._my_full_name(value_str)
+            return self._mask_full_name(value_str)
         elif pii_type == 'address':
-            return self._my_address(value_str)
+            return self._mask_address(value_str)
         elif pii_type == 'device_id':
-            return self._my_device_id(value_str)
+            return self._mask_device_id(value_str)
         elif pii_type == 'ip_address':
-            return self._my_ip_address(value_str)
+            return self._mask_ip_address(value_str)
         
         return value_str
     
-    def _my_phone_number(self, phone):
-        """my phone: 98XXXXXX10"""
+    def _mask_phone_number(self, phone):
+        """Mask phone: 98XXXXXX10"""
         digits = re.sub(r'\D', '', str(phone))
         if len(digits) == 10:
             return f"{digits[:2]}XXXXXX{digits[-2:]}"
         return digits
     
-    def _my_aadhar_number(self, aadhar):
-        """my Aadhar: XXXX XXXX 9012"""
+    def _mask_aadhar_number(self, aadhar):
+        """Mask Aadhar: XXXX XXXX 9012"""
         digits = re.sub(r'\D', '', str(aadhar))
         if len(digits) == 12:
             return f"XXXX XXXX {digits[-4:]}"
         return digits
     
-    def _my_passport_number(self, passport):
-        """my passport: PXXXXXXX"""
+    def _mask_passport_number(self, passport):
+        """Mask passport: PXXXXXXX"""
         passport_str = str(passport).upper()
         if len(passport_str) >= 2:
             return f"{passport_str[0]}{'X' * (len(passport_str) - 1)}"
         return 'XXXXXXXX'
     
-    def _my_upi_id(self, upi):
-        """my UPI: uXXX@provider"""
+    def _mask_upi_id(self, upi):
+        """Mask UPI: uXXX@provider"""
         if '@' in str(upi):
             username, provider = str(upi).split('@', 1)
-            myed_user = username[0] + 'X' * max(0, len(username) - 1) if username else 'X'
-            return f"{myed_user}@{provider}"
+            masked_user = username[0] + 'X' * max(0, len(username) - 1) if username else 'X'
+            return f"{masked_user}@{provider}"
         return str(upi)
     
-    def _my_email_address(self, email):
-        """my email: rXXXXX@domain.com"""
+    def _mask_email_address(self, email):
+        """Mask email: rXXXXX@domain.com"""
         if '@' in str(email):
             username, domain = str(email).split('@', 1)
-            myed_user = username[0] + 'X' * max(0, len(username) - 1) if username else 'X'
-            return f"{myed_user}@{domain}"
+            masked_user = username[0] + 'X' * max(0, len(username) - 1) if username else 'X'
+            return f"{masked_user}@{domain}"
         return str(email)
     
-    def _my_full_name(self, name):
-        """my name: JXXX SXXXX"""
+    def _mask_full_name(self, name):
+        """Mask name: JXXX SXXXX"""
         words = str(name).split()
-        myed_words = []
+        masked_words = []
         for word in words:
             if len(word) > 1:
-                myed_words.append(word[0].upper() + 'X' * (len(word) - 1))
+                masked_words.append(word[0].upper() + 'X' * (len(word) - 1))
             else:
-                myed_words.append('X')
-        return ' '.join(myed_words)
+                masked_words.append('X')
+        return ' '.join(masked_words)
     
-    def _my_address(self, address):
-        """my address while preserving structure"""
+    def _mask_address(self, address):
+        """Mask address while preserving structure"""
         parts = [part.strip() for part in str(address).split(',')]
-        myed_parts = []
+        masked_parts = []
         
         for part in parts:
             words = part.split()
-            myed_words = []
+            masked_words = []
             for word in words:
                 if re.match(r'^\d+$', word):  # Pure numbers (like pincodes)
-                    myed_words.append('X' * len(word))
+                    masked_words.append('X' * len(word))
                 elif len(word) > 2:
-                    myed_words.append(word[:1] + 'X' * (len(word) - 1))
+                    masked_words.append(word[:1] + 'X' * (len(word) - 1))
                 else:
-                    myed_words.append('X' * len(word))
-            myed_parts.append(' '.join(myed_words))
+                    masked_words.append('X' * len(word))
+            masked_parts.append(' '.join(masked_words))
             
-        return ', '.join(myed_parts)
+        return ', '.join(masked_parts)
     
-    def _my_device_id(self, device_id):
-        """my device ID: DEVXXXXX"""
+    def _mask_device_id(self, device_id):
+        """Mask device ID: DEVXXXXX"""
         device_str = str(device_id)
         if len(device_str) > 3:
             return device_str[:3] + 'X' * (len(device_str) - 3)
         return 'X' * len(device_str)
     
-    def _my_ip_address(self, ip):
-        """my IP: XXX.XXX.XXX.100"""
+    def _mask_ip_address(self, ip):
+        """Mask IP: XXX.XXX.XXX.100"""
         if '.' in str(ip):
             parts = str(ip).split('.')
             if len(parts) == 4:
@@ -389,7 +389,7 @@ class PIIDetectorRedactor:
         for key, value in record_dict.items():
             if key in all_pii_fields:
                 pii_type = all_pii_fields[key]
-                redacted_record[key] = self.apply_mying_strategy(pii_type, value)
+                redacted_record[key] = self.apply_masking_strategy(pii_type, value)
             else:
                 redacted_record[key] = value
         
@@ -475,7 +475,7 @@ def main():
     """Main execution function with command line argument handling"""
     if len(sys.argv) != 2:
         print("Usage: python3 detector_Gaja_sagar.py <input_csv_file>")
-        print("Example: python3 detector_Gaja_sagar.py iscp_pii_dataset.csv")
+        print("Example: python3 detector_Gaja_sagar.py iscp_pii_dataset_-_Sheet1.csv")
         sys.exit(1)
     
     input_file = sys.argv[1]
@@ -487,7 +487,7 @@ def main():
     
     # Generate output filename
     base_name = os.path.splitext(input_file)[0]
-    output_file = f"redacted_output_Gaja_Sagar.csv"
+    output_file = f"redacted_output_Gaja_sagar.csv"
     
     print("=== PII Detection and Redaction System ===")
     print(f"Input File: {input_file}")
@@ -505,5 +505,5 @@ def main():
         print(f"\nFailed to process dataset: {str(e)}")
         sys.exit(1)
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
