@@ -474,7 +474,7 @@ class PIIDetectorRedactor:
 def main():
     """Main execution function with command line argument handling"""
     if len(sys.argv) != 2:
-        print("Usage: python3 detector_Gaja_sagar.py <input_csv_file>")
+        print("Usage: python3 detector_Gaja_sagar.py iscp_pii_dataset_-_Sheet1.csv")
         print("Example: python3 detector_Gaja_sagar.py iscp_pii_dataset_-_Sheet1.csv")
         sys.exit(1)
     
